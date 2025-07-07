@@ -81,7 +81,7 @@ namespace UI
 #if UNITY_EDITOR
             SceneManager.LoadScene(TestSceneName);
 #else
-            SceneManager.LoadScene("ARSceneName"); 
+            SceneManager.LoadScene(ARSceneName); 
 #endif
         }
 

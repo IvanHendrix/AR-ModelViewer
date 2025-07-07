@@ -33,26 +33,37 @@ namespace Assets
 
         public async Task<bool> LoadModelFromURL(string url)
         {
-            Debug.Log("[ModelLoader] Starting to load model from URL: " + url);
-
+            Debug.Log($"[ModelLoader] Starting to load model from URL: {url}");
             OnSendMessage?.Invoke("Loading...");
 
             _gltf = new GltfImport();
-            Task<bool> task = _gltf.Load(new Uri(url));
+
+            Task<bool> task;
+            try
+            {
+                task = _gltf.Load(new Uri(url));
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[ModelLoader] Exception while starting load: {e.Message}");
+                OnSendMessage?.Invoke("Failed");
+                return false;
+            }
 
             float fakeProgress = 0f;
-            while (!task.IsCompleted)
+            while (!task.IsCompleted || !_gltf.LoadingDone)
             {
                 await Task.Delay(200);
-                fakeProgress = Mathf.MoveTowards(fakeProgress, 0.9f, 0.1f);
+                fakeProgress = Mathf.Min(fakeProgress + 0.05f, 0.9f);
                 OnSendLoadProgress?.Invoke(fakeProgress);
             }
 
-            bool success = task.IsCompletedSuccessfully && _gltf.LoadingDone;
+            bool success = task.IsCompletedSuccessfully && task.Result && _gltf.LoadingDone;
 
             if (!success)
             {
-                Debug.LogError("[ModelLoader] Failed to load model.");
+                Debug.LogError("[ModelLoader] Failed to load model from task result.");
+                Debug.LogError($"IsCompletedSuccessfully: {task.IsCompletedSuccessfully}, Result: {task.Result}, LoadingDone: {_gltf.LoadingDone}");
                 OnSendMessage?.Invoke("Failed");
                 return false;
             }
@@ -68,7 +79,7 @@ namespace Assets
 
             _loadedModel = new GameObject("GLB Model Holder");
             DontDestroyOnLoad(_loadedModel);
-
+            OnSendLoadProgress?.Invoke(1f);
             return true;
         }
 
