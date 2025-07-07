@@ -703,8 +703,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 163c12f17a4b48d5aa5d697349f2b8e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _raycastManager: {fileID: 0}
-  _planeManager: {fileID: 0}
+  _raycastManager: {fileID: 1862219843}
+  _planeManager: {fileID: 1862219842}
   _placeButton: {fileID: 194403618}
 --- !u!4 &405123681
 Transform:
@@ -804,7 +804,7 @@ MonoBehaviour:
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
   m_Cameras: []
-  m_RendererIndex: -1
+  m_RendererIndex: 0
   m_VolumeLayerMask:
     serializedVersion: 2
     m_Bits: 1
@@ -840,7 +840,7 @@ Camera:
   m_GameObject: {fileID: 827824745}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 4
+  m_ClearFlags: 2
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
