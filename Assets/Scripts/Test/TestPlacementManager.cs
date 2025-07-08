@@ -1,4 +1,5 @@
-﻿using AR.Models;
+﻿using System.Collections.Generic;
+using AR.Models;
 using Assets;
 using Services.Input;
 using UnityEngine;
@@ -16,6 +17,8 @@ namespace Test
 
         private IInputProvider _input;
         private Camera _camera;
+
+        private List<GameObject> _models = new List<GameObject>();
 
         private void Awake()
         {
@@ -38,20 +41,26 @@ namespace Test
             if (_input.TryGetTap(out Vector2 position))
             {
                 Ray ray = _camera.ScreenPointToRay(position);
+
                 if (Physics.Raycast(ray, out RaycastHit hit))
                 {
-                    Debug.Log("[ARPlacementManager] Hit something: " + hit.transform.name);
+                    Debug.Log($"[PlacementManager] Hit: {hit.transform.name} at {hit.point}");
 
                     if (hit.transform.TryGetComponent<ModelSelectable>(out var selectable))
                     {
                         selectable.HandleSelection();
+                        return;
                     }
 
-                    return;
+                    if (hit.collider != null)
+                    {
+                        TryPlaceModel(hit.point, Quaternion.identity);
+                        return;
+                    }
                 }
 
-                Vector3 fakePos = ray.GetPoint(Distance);
-                TryPlaceModel(fakePos, Quaternion.identity);
+                Vector3 fallback = ray.GetPoint(Distance);
+                TryPlaceModel(fallback, Quaternion.identity);
             }
         }
 
@@ -68,14 +77,21 @@ namespace Test
                 GameObject model = ModelLoader.Instance.InstantiateModel(pos, rot);
 
                 ModelSelectable selectable = model.GetComponent<ModelSelectable>();
-
-             
+                
                 selectable.HandleSelection();
+                _models.Add(model);
             }
         }
         
         private void OnDestroy()
         {
+            foreach (GameObject item in _models)
+            {
+                Destroy(item);
+            }
+            
+            _models.Clear();
+            
             _placeButton.onClick.RemoveListener(OnPlaceModeToggle);
         }
     }
