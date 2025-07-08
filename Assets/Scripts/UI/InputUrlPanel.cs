@@ -18,16 +18,22 @@ namespace UI
         [SerializeField] private TMP_InputField _urlInput;
         [SerializeField] private TextMeshProUGUI _statusText;
         [SerializeField] private Button _downloadButton;
-        [SerializeField] private Button _startARButton;
+        [SerializeField] private Button _startARSceneButton;
+        [SerializeField] private Button _startTestButton;
+        [SerializeField] private Button _pasteBufferButton;
 
         private void Start()
         {
             _downloadButton.interactable = false;
-            _startARButton.interactable = false;
+            _startARSceneButton.interactable = false;
+            _startTestButton.interactable = false;
             
             _urlInput.onValueChanged.AddListener(OnURLChanged);
-            _downloadButton.onClick.AddListener(OnDownloadClicked);
-            _startARButton.onClick.AddListener(OnStartARClicked);
+            
+            _downloadButton.onClick.AddListener(OnDownloadButtonClick);
+            _startARSceneButton.onClick.AddListener(OnStartARSceneButtonClick);
+            _startTestButton.onClick.AddListener(OnStartTestSceneButtonClick);
+            _pasteBufferButton.onClick.AddListener(OnPasteBufferButtonClick);
 
             ModelLoader.Instance.OnSendLoadProgress += OnUpdateProgress;
             ModelLoader.Instance.OnSendMessage += OnUpdateStatus;
@@ -48,7 +54,7 @@ namespace UI
             _downloadButton.interactable = URLValidator.IsValidGLB(url);
         }
 
-        private async void OnDownloadClicked()
+        private async void OnDownloadButtonClick()
         {
             _loadingIndicator.SetActive(true);
             _downloadButton.interactable = false;
@@ -60,7 +66,8 @@ namespace UI
             if (result)
             {
                 _loadingIndicator.SetActive(false);
-                _startARButton.interactable = true;
+                _startTestButton.interactable = true;
+                _startARSceneButton.interactable = true;
             }
             else
             {
@@ -76,20 +83,34 @@ namespace UI
             _downloadButton.interactable = true;
         }
 
-        private void OnStartARClicked()
+        private void OnStartARSceneButtonClick()
         {
-#if UNITY_EDITOR
-            SceneManager.LoadScene(TestSceneName);
-#else
             SceneManager.LoadScene(ARSceneName); 
-#endif
+        }
+        
+        private void OnStartTestSceneButtonClick()
+        {
+            SceneManager.LoadScene(TestSceneName); 
+        }
+        
+        private void OnPasteBufferButtonClick()
+        {
+            string clipboardText = GUIUtility.systemCopyBuffer;
+            
+            if (!string.IsNullOrEmpty(clipboardText))
+            {
+                _urlInput.text = clipboardText;
+                _urlInput.ForceLabelUpdate();
+            }
         }
 
         private void OnDestroy()
         {
             _urlInput.onValueChanged.RemoveListener(OnURLChanged);
-            _downloadButton.onClick.RemoveListener(OnDownloadClicked);
-            _startARButton.onClick.RemoveListener(OnStartARClicked);
+            
+            _downloadButton.onClick.RemoveListener(OnDownloadButtonClick);
+            _startARSceneButton.onClick.RemoveListener(OnStartARSceneButtonClick);
+            _startTestButton.onClick.RemoveListener(OnStartTestSceneButtonClick);
 
             ModelLoader.Instance.OnSendLoadProgress -= OnUpdateProgress;
             ModelLoader.Instance.OnSendMessage -= OnUpdateStatus;
