@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AR.Models;
 using GLTFast;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Assets
 {
@@ -38,51 +39,51 @@ namespace Assets
 
             _gltf = new GltfImport();
 
-            Task<bool> task;
-            try
+            byte[] data;
+
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                task = _gltf.Load(new Uri(url));
+                www.SendWebRequest();
+
+                while (!www.isDone)
+                {
+                    OnSendLoadProgress?.Invoke(www.downloadProgress); 
+                    await Task.Yield();
+                }
+
+                if (www.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError($"[ModelLoader] Download failed: {www.error}");
+                    OnSendMessage?.Invoke("Failed");
+                    return false;
+                }
+
+                data = www.downloadHandler.data;
             }
-            catch (Exception e)
+            
+            bool success = await _gltf.Load(data);
+
+            if (!success || !_gltf.LoadingDone)
             {
-                Debug.LogError($"[ModelLoader] Exception while starting load: {e.Message}");
+                Debug.LogError("[ModelLoader] Import failed");
                 OnSendMessage?.Invoke("Failed");
                 return false;
             }
 
-            float fakeProgress = 0f;
-            while (!task.IsCompleted || !_gltf.LoadingDone)
-            {
-                await Task.Delay(200);
-                fakeProgress = Mathf.Min(fakeProgress + 0.05f, 0.9f);
-                OnSendLoadProgress?.Invoke(fakeProgress);
-            }
-
-            bool success = task.IsCompletedSuccessfully && task.Result && _gltf.LoadingDone;
-
-            if (!success)
-            {
-                Debug.LogError("[ModelLoader] Failed to load model from task result.");
-                Debug.LogError($"IsCompletedSuccessfully: {task.IsCompletedSuccessfully}, Result: {task.Result}, LoadingDone: {_gltf.LoadingDone}");
-                OnSendMessage?.Invoke("Failed");
-                return false;
-            }
-
-            Debug.Log("[ModelLoader] Model loaded successfully and ready to instantiate later.");
             OnSendMessage?.Invoke("Success");
 
             if (_loadedModel != null)
             {
                 Destroy(_loadedModel);
-                Debug.Log("[ModelLoader] Destroyed previous model.");
             }
 
             _loadedModel = new GameObject("GLB Model Holder");
             DontDestroyOnLoad(_loadedModel);
             OnSendLoadProgress?.Invoke(1f);
+
             return true;
         }
-
+        
         public GameObject InstantiateModel(Vector3 position, Quaternion rotation)
         {
             if (_gltf == null)
