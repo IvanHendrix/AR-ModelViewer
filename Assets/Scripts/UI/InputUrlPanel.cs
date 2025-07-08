@@ -21,6 +21,7 @@ namespace UI
         [SerializeField] private Button _startARSceneButton;
         [SerializeField] private Button _startTestButton;
         [SerializeField] private Button _pasteBufferButton;
+        [SerializeField] private Button _cleanButton;
 
         private void Start()
         {
@@ -34,6 +35,7 @@ namespace UI
             _startARSceneButton.onClick.AddListener(OnStartARSceneButtonClick);
             _startTestButton.onClick.AddListener(OnStartTestSceneButtonClick);
             _pasteBufferButton.onClick.AddListener(OnPasteBufferButtonClick);
+            _cleanButton.onClick.AddListener(OnCleanButtonClick);
 
             ModelLoader.Instance.OnSendLoadProgress += OnUpdateProgress;
             ModelLoader.Instance.OnSendMessage += OnUpdateStatus;
@@ -57,6 +59,8 @@ namespace UI
         private async void OnDownloadButtonClick()
         {
             _loadingIndicator.SetActive(true);
+            _startARSceneButton.interactable = false;
+            _startTestButton.interactable = false;
             _downloadButton.interactable = false;
             
             var url = _urlInput.text;
@@ -81,6 +85,8 @@ namespace UI
             _urlInput.text = "";
             _loadingIndicator.SetActive(false);
             _downloadButton.interactable = true;
+            _startARSceneButton.interactable = false;
+            _startTestButton.interactable = false;
         }
 
         private void OnStartARSceneButtonClick()
@@ -91,6 +97,12 @@ namespace UI
         private void OnStartTestSceneButtonClick()
         {
             SceneManager.LoadScene(TestSceneName); 
+        }
+        
+        private void OnCleanButtonClick()
+        {
+            _urlInput.text = string.Empty;
+            _urlInput.ForceLabelUpdate();
         }
         
         private void OnPasteBufferButtonClick()
@@ -111,7 +123,8 @@ namespace UI
             _downloadButton.onClick.RemoveListener(OnDownloadButtonClick);
             _startARSceneButton.onClick.RemoveListener(OnStartARSceneButtonClick);
             _startTestButton.onClick.RemoveListener(OnStartTestSceneButtonClick);
-
+            _cleanButton.onClick.RemoveListener(OnCleanButtonClick);
+            
             ModelLoader.Instance.OnSendLoadProgress -= OnUpdateProgress;
             ModelLoader.Instance.OnSendMessage -= OnUpdateStatus;
         }
